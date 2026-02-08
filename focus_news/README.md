@@ -6,15 +6,17 @@
 Как это работает: программа читает за вас последние 100 постов из интересующих вас каналов 
 раз в 6 часов и раз в неделю присылает отчёт "Главное за неделю"
 
+Пример дайджестов, которые получаются: https://t.me/focus_news_lavka (публичный канал в Телеграме)
+
 ### Вам понадобится
 1. Чистая виртуальная машина (можно создать в Яндекс Облаке, https://yandex.cloud/)
 2. Подписка ChatGPT Plus для доступа к модели GPT-4o по API(на момент 06.10.2024г: 
-https://platform.openai.com/docs/guides/rate-limits; проект можно запустить и без подписки
-на модели 3.5-turbo, немного модифицировав код)
-3. Тулзы, которые я использую: iTerm (для деплоя), Caprover (для инфры, это PaaS), DBeaver
+https://platform.openai.com/docs/guides/rate-limits; проект можно запустить
+и без подписки на модели 3.5-turbo, немного модифицировав код)
+4. Тулзы, которые я использую: iTerm (для деплоя), Caprover (для инфры, это PaaS), DBeaver
 (чтобы смотреть, что записывается в базу данных)
-4. Локальная среда, в которой я работаю: Mac OS Sonoma 14.6.1
-5. Версия Python, с которой будет работать: 3.10
+5. Локальная среда, в которой я работаю: Mac OS Sonoma 14.6.1
+6. Версия Python, с которой будет работать: 3.10
 
 ### Алгоритм действий
 1. Создаём 2 канала в телеге:
@@ -26,28 +28,26 @@ https://platform.openai.com/docs/guides/rate-limits; проект можно з�
 4. Создаём в Caprover 2 apps:
    1. База данных PostgreSQL, через One-Click Apps/Databases
    2. App-пустышка, называем его focus_news
-5. Заходим в контейнер-пустышку и прописываем 5 env var'ов:
-   1. TG_API_ID - взять из https://my.telegram.org/apps
-   2. TG_API_HASH - взять из https://my.telegram.org/apps
-   3. FOCUS_NEWS_TG_CREDS - session string от аккаунта, с которого вы будете 
+5. Заходим в контейнер-пустышку и прописываем 3 env var'f:
+   1. FOCUS_NEWS_TG_CREDS - session string от аккаунта, с которого вы будете 
 подключаться к Телеграму, подробнее тут: https://docs.telethon.dev/en/stable/concepts/sessions.html; 
-сгенерировать строку можно с помощью ``p11-save_session_string.py`` из этого репозитория
-   4. FOCUS_NEWS_DB - адрес базы данных, куда мы будем сохранять, в формате ``postgresql://<username>:...``
-   5. FOCUS_NEWS_OPENAI_API_KEY - ключ от ChatGPT API, взять тут: https://platform.openai.com/api-keys
+сгенерировать строку можно с помощью ``p11-save_session_string.py`` из этого же репозитория
+   2. FOCUS_NEWS_DB - адрес базы данных, куда мы будем сохранять посты, в формате ``postgresql://<username>:...``
+   3. FOCUS_NEWS_OPENAI_API_KEY - ключ от ChatGPT API, взять тут: https://platform.openai.com/api-keys
 6. Настраиваем подключения к ключевым элементам инфры с локальной машины:
    1. Подключиться к свежеразвернутой базе данных из DBeaver; в интерфейсе Caprover, на 
    странице этого app будет написано, по какому адресу доступна база данных
    2. Залогиниться в Caprover с локальной машины, ``caprover login``
-   3. Настроить виртуальную среду, для этого: внутри папки ``focus_news``
-   ``
+   3. Настроить виртуальную среду, для этого: внутри папки ``focus_news``:
+   ```[bash]
    python -m venv ./venv
    source venv/bin/activate
    pip install -r requirements.txt
-   ``
+   ```
 7. Редактируем код "под себя":
    1. в файле ``focus_news_get_news.py``
       1. Список каналов: переменная ``news_channel_info`` (dict).  ID канала можно узнать, 
-отправив любой из его постов в бот https://t.me/userinfobot
+отправив любой из его постов канала в бот https://t.me/userinfobot
       2. ID канала для логов: переменная ``LOG_CHANNEL_ID`` (bigint).
    2. в файле ``focus_news_write_summary.py``
       1. ID канала для логов: переменная ``LOG_CHANNEL_ID`` (bigint).
@@ -59,7 +59,7 @@ https://platform.openai.com/docs/guides/rate-limits; проект можно з�
 9. Тестово запускаем ``focus_news_write_summary.py`` локально. Проверяем, что в канал для дайджестов
 упало сообщение с дайджестом
 10. Если всё гуд, деплоим в Caprover с помощью команды ``caprover deploy``
-11. Если нужно, настраиваем частоту дайджестов и краулинга в ``core.py``
+11. Регулируем частоту дайджестов и краулинга "под себя", редактируя ``core.py``
 
 ### Альтернативные способы решения задачи (это неточно)
 - http://relevanceai.com
